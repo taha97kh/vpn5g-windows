@@ -1,0 +1,96 @@
+* { box-sizing: border-box; }
+:root {
+  --bg: #07090d;
+  --surface: #11161f;
+  --surface-2: #181f2b;
+  --border: #232c3b;
+  --text: #e8eef5;
+  --muted: #8b98a9;
+  --cyan: #00e5ff;
+  --cyan-dim: rgba(0, 229, 255, .15);
+  --green: #22e584;
+  --red: #ff5c5c;
+  --gold: #ffc93c;
+}
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+  font-family: Tahoma, "Segoe UI", system-ui, sans-serif; }
+#app { max-width: 560px; margin: 0 auto; padding: 16px 16px 32px; min-height: 100vh; }
+header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.brand .logo { font-size: 28px; font-weight: 800; letter-spacing: 1px;
+  background: linear-gradient(90deg, var(--cyan), #7df9ff);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand .sub { color: var(--muted); margin-inline-start: 8px; font-size: 13px; }
+.version { color: var(--muted); font-size: 12px; }
+
+.tabs { display: flex; gap: 6px; margin: 12px 0 18px; }
+.tab { flex: 1; padding: 10px 0; background: var(--surface); color: var(--muted);
+  border: 1px solid var(--border); border-radius: 12px; cursor: pointer; font-size: 15px; font-family: inherit; }
+.tab.active { background: var(--cyan-dim); color: var(--cyan); border-color: var(--cyan); }
+.tab-page { display: none; }
+.tab-page.active { display: block; }
+
+.power-wrap { text-align: center; padding: 24px 0 8px; }
+.power { width: 190px; height: 190px; border-radius: 50%; border: none; cursor: pointer;
+  background: radial-gradient(circle at 50% 35%, #1b2534, #0d1219 70%);
+  box-shadow: 0 0 0 6px var(--surface), 0 0 42px rgba(0,229,255,.12);
+  transition: box-shadow .3s; padding: 22px; }
+.power svg { width: 100%; height: 100%; }
+.power .ring { fill: none; stroke: var(--border); stroke-width: 4; }
+.power .pwr-line, .power .pwr-arc { fill: none; stroke: var(--muted); stroke-width: 7; stroke-linecap: round; }
+.power.on { box-shadow: 0 0 0 6px var(--surface), 0 0 60px rgba(0,229,255,.55), 0 0 120px rgba(0,229,255,.25); }
+.power.on .pwr-line, .power.on .pwr-arc { stroke: var(--cyan); }
+.power.on .ring { stroke: var(--cyan); }
+.status-text { margin-top: 18px; font-size: 20px; font-weight: 700; }
+.server-line { margin-top: 8px; color: var(--muted); font-size: 14px; }
+.countdown { margin-top: 16px; font-size: 30px; font-weight: 800; color: var(--cyan); }
+.countdown-label { display: block; font-size: 13px; color: var(--muted); font-weight: 400; margin-top: 4px; }
+.session-note { margin-top: 18px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+
+#search, #auth-email-input, #auth-code-input {
+  width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 15px; font-family: inherit; margin-bottom: 10px; }
+.servers-meta { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 13px; margin: 4px 0 10px; }
+.country-group { margin-bottom: 14px; }
+.country-group h3 { margin: 10px 2px 6px; font-size: 14px; color: var(--cyan); }
+.server { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px 14px; margin-bottom: 6px; cursor: pointer; }
+.server:hover { border-color: var(--cyan); }
+.server.active { border-color: var(--cyan); background: var(--cyan-dim); }
+.server .name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.server .meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.proto { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+.ping { font-size: 13px; color: var(--green); }
+.badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 700; }
+.badge.free { background: rgba(34,229,132,.15); color: var(--green); }
+.badge.vip { background: rgba(255,201,60,.15); color: var(--gold); }
+.vip-note { margin-top: 12px; background: rgba(255,201,60,.1); border: 1px solid var(--gold);
+  border-radius: 12px; padding: 12px; font-size: 14px; line-height: 1.7; }
+.vip-note a { color: var(--cyan); }
+
+.btn { padding: 11px 18px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text); cursor: pointer; font-size: 15px; font-family: inherit; }
+.btn.primary { background: var(--cyan); color: #04222a; border-color: var(--cyan); font-weight: 700; }
+.btn.ghost { background: transparent; color: var(--muted); }
+.btn.small { padding: 6px 10px; font-size: 13px; }
+.btn:disabled { opacity: .5; cursor: default; }
+#btn-send-code, #btn-verify { width: 100%; margin-bottom: 10px; }
+
+#update-banner { background: linear-gradient(90deg, rgba(0,229,255,.16), rgba(0,229,255,.05));
+  border: 1px solid var(--cyan); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.update-text { font-size: 15px; display: flex; gap: 8px; flex-wrap: wrap; }
+.update-actions { display: flex; gap: 8px; margin-top: 10px; }
+.progress-bar { height: 8px; background: var(--surface-2); border-radius: 6px; overflow: hidden; margin-top: 10px; }
+#update-progress-fill { height: 100%; width: 0%; background: var(--cyan); transition: width .3s; }
+.progress-text { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+.error { background: rgba(255,92,92,.12); border: 1px solid var(--red); color: #ffb3b3;
+  border-radius: 12px; padding: 10px 12px; margin-top: 12px; font-size: 14px; line-height: 1.6; }
+.ok { background: rgba(34,229,132,.12); border: 1px solid var(--green); color: #b8ffda;
+  border-radius: 12px; padding: 10px 12px; margin-top: 12px; font-size: 14px; }
+.hidden { display: none !important; }
+h2 { font-size: 18px; margin: 4px 0 6px; }
+.hint { color: var(--muted); font-size: 14px; line-height: 1.7; }
+.email { direction: ltr; text-align: center; font-weight: 700; color: var(--cyan); }
+footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 28px; }
+.empty { color: var(--muted); text-align: center; padding: 24px 0; line-height: 1.8; }

@@ -1,0 +1,8 @@
+# Binaries and local builds — never committed.
+vpn5g.exe
+xray.exe
+xray-config.json
+VPN5G-Windows.zip
+Xray-windows-64.zip
+dist/
+*.log
