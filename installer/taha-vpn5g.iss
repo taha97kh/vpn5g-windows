@@ -135,9 +135,9 @@ const
   ExtensionID = '{#ExtensionID}';
 
 { Write the Native Messaging host manifest. It must contain the absolute
-  path of nmhost.exe, which is only known at install time ({app}).
-  The description stays in English on purpose: the manifest is not
-  user-visible UI, and ASCII avoids any encoding risk. }
+  path of nmhost.exe, which is only known at install time (the app
+  folder). The description stays in English on purpose: the manifest
+  is not user-visible UI, and ASCII avoids any encoding risk. }
 procedure WriteNMHostManifest();
 var
   ManifestPath, ExePath, Json: String;
