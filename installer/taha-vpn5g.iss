@@ -1,4 +1,4 @@
-; TAHA VPN 5G — Windows installer (Inno Setup 6, Persian).
+﻿; TAHA VPN 5G — Windows installer (Inno Setup 6, Persian).
 ;
 ; Built by CI (see .github/workflows/build-windows.yml, job "installer"):
 ;   1. the "build" job produces VPN5G-Windows.zip (vpn5g.exe + xray.exe +
@@ -55,10 +55,49 @@ VersionInfoDescription=TAHA VPN 5G — نصب‌کننده ویندوز
 VersionInfoProductName={#AppName}
 
 [Languages]
-Name: "fa"; MessagesFile: "compiler:Languages\Persian.isl"
+; Inno Setup ships no Persian language file, so the wizard uses the
+; English base and the [Messages] section below overrides the visible
+; strings in Persian. (Do NOT point at Languages\Persian.isl — it does
+; not exist in Inno Setup 6 and the compile fails.)
+Name: "en"; MessagesFile: "compiler:Default.isl"
+
+; Persian wizard strings (this file must stay UTF-8 with BOM).
+[Messages]
+SetupAppTitle=نصب — %1
+SetupWindowTitle=نصب — %1
+UninstallAppTitle=حذف — %1
+UninstallWindowTitle=حذف — %1
+WelcomeLabel1=به جادوگر نصب [name] خوش آمدید
+WelcomeLabel2=این برنامه [name] را روی رایانه‌ی شما نصب می‌کند.%n%nتوصیه می‌شود پیش از ادامه، همه‌ی برنامه‌های دیگر را ببندید.
+ClickNext=برای ادامه «بعدی» را بزنید؛ برای بازگشت «بازگشت» را بزنید.
+ClickInstall=برای ادامه‌ی نصب «نصب» را بزنید؛ برای بازبینی یا تغییر تنظیمات «بازگشت» را بزنید.
+ClickFinish=برای خروج از نصب «پایان» را بزنید.
+FinishedHeadingLabel=تکمیل جادوگر نصب [name]
+FinishedLabel=نصب [name] روی رایانه‌ی شما کامل شد.
+SelectDirTitle=انتخاب محل نصب
+SelectDirLabel3=برنامه‌ی [name] در پوشه‌ی زیر نصب می‌شود.%n%nبرای ادامه «بعدی» را بزنید. برای انتخاب پوشه‌ای دیگر «مرور» را بزنید.
+SelectDirBrowseLabel=برای ادامه «بعدی» را بزنید. برای انتخاب پوشه‌ای دیگر «مرور» را بزنید.
+DiskSpaceMBLabel=حداقل [mb] مگابایت فضای خالی لازم است.
+ReadyLabel1=آماده‌ی نصب
+ButtonBack=بازگشت
+ButtonNext=بعدی
+ButtonInstall=نصب
+ButtonFinish=پایان
+ButtonCancel=لغو
+ButtonBrowse=مرور
+ButtonYes=بله
+ButtonNo=خیر
+ButtonOK=تأیید
+ConfirmUninstall=آیا مطمئن هستید که می‌خواهید %1 و همه‌ی اجزای آن را کاملاً حذف کنید؟
+UninstallStatusLabel=لطفاً صبر کنید تا برنامه‌ی حذف، %1 را از رایانه‌ی شما حذف کند.
+StatusExtractFiles=در حال استخراج فایل‌ها…
+
+[CustomMessages]
+DesktopIcon=ایجاد میانبر روی دسکتاپ
+AdditionalIcons=آیکون‌های اضافی
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
+Name: "desktopicon"; Description: "{cm:DesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
 
 [Files]
 Source: "staging\vpn5g.exe"; DestDir: "{app}"; Flags: ignoreversion
