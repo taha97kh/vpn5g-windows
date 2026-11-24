@@ -9,9 +9,14 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><span class="logo">VPN 5G</span><span class="sub">4ref.ai</span></div>
-    <div class="version" id="version">v1.0.0</div>
+    <div class="brand"><span class="logo">TAHA VPN 5G</span><span class="sub">4ref.ai</span></div>
+    <div class="version" id="version">v2.0.0</div>
   </header>
+
+  <div id="announcement" class="announcement hidden">
+    <span id="announcement-text"></span>
+    <button id="announcement-close" class="btn ghost small">✕</button>
+  </div>
 
   <div id="update-banner" class="hidden">
     <div class="update-text">
@@ -32,6 +37,7 @@
   <nav class="tabs">
     <button class="tab active" data-tab="home">خانه</button>
     <button class="tab" data-tab="servers">سرورها</button>
+    <button class="tab" data-tab="premium">ویژه</button>
     <button class="tab" data-tab="account">حساب</button>
   </nav>
 
@@ -43,8 +49,13 @@
         </button>
         <div id="status-text" class="status-text">قطع است</div>
         <div id="server-line" class="server-line">سروری انتخاب نشده — از تب سرورها یکی را انتخاب کنید</div>
+        <div id="speeds" class="speeds hidden">
+          <span>⬇ دانلود <b id="speed-down">—</b></span>
+          <span>⬆ آپلود <b id="speed-up">—</b></span>
+        </div>
         <div id="countdown" class="countdown hidden"><span id="countdown-time">30:00</span><span class="countdown-label">مانده تا پایان جلسه</span></div>
-        <div class="session-note">هر جلسه ۳۰ دقیقه است؛ بعد از آن خودکار قطع می‌شود و می‌توانید دوباره وصل شوید.</div>
+        <div id="unlimited-note" class="countdown hidden"><span>بدون محدودیت زمانی ✨</span></div>
+        <div class="session-note">هر جلسه ۳۰ دقیقه است؛ بعد از آن خودکار قطع می‌شود و می‌توانید دوباره وصل شوید. مشترک‌ها بدون محدودیت زمانی وصل می‌مانند.</div>
       </div>
       <div id="home-error" class="error hidden"></div>
     </section>
@@ -52,6 +63,16 @@
     <section id="tab-servers" class="tab-page">
       <input id="search" type="search" placeholder="جستجوی کشور یا سرور…" autocomplete="off">
       <div class="servers-meta"><span id="servers-count"></span><button id="btn-refresh" class="btn ghost small">↻ بروزرسانی لیست</button></div>
+      <div class="gift-row">
+        <button id="btn-gift-open" class="btn gold">🎁 کد هدیه</button>
+        <span class="hint">کد هدیه را اینجا وارد کنید؛ کد اشتراک خریداری‌شده فقط در تب «ویژه» ثبت می‌شود.</span>
+      </div>
+      <div id="gift-box" class="gift-box hidden">
+        <input id="gift-code-input" type="text" placeholder="کد هدیه" dir="ltr" autocomplete="off">
+        <button id="btn-gift-redeem" class="btn primary">فعال کردن</button>
+        <div id="gift-msg" class="ok hidden"></div>
+        <div id="gift-error" class="error hidden"></div>
+      </div>
       <div id="servers-list"></div>
       <div id="vip-note" class="vip-note hidden">
         این سرور VIP است. برای فعال‌سازی VIP به ربات تلگرام مراجعه کنید:
@@ -59,29 +80,64 @@
       </div>
     </section>
 
+    <section id="tab-premium" class="tab-page">
+      <h2>ویژه ✨</h2>
+      <p class="hint">اشتراک ویژه: همه‌ی سرورها، بدون قطع ۳۰ دقیقه‌ای، اتصال خودکار به سرور دیگر در صورت افت.</p>
+      <div id="sub-status" class="sub-status">در حال بررسی اشتراک…</div>
+      <div class="premium-block">
+        <h3>ثبت کد اشتراک خریداری‌شده</h3>
+        <input id="redeem-code-input" type="text" placeholder="کد اشتراک" dir="ltr" autocomplete="off">
+        <button id="btn-redeem" class="btn gold">فعال کردن اشتراک</button>
+        <div id="redeem-msg" class="ok hidden"></div>
+        <div id="redeem-error" class="error hidden"></div>
+      </div>
+      <div class="premium-block">
+        <h3>طرح‌های اشتراک</h3>
+        <div id="plans-list"><span class="hint">در حال دریافت طرح‌ها…</span></div>
+      </div>
+      <div class="premium-block">
+        <h3>خرید کد اشتراک</h3>
+        <p class="hint">با زدن روی هر طرح، به ربات تلگرام می‌روید؛ مبلغ پرداختی برای هر سفارش یکتاست تا تایید خودکار انجام شود.</p>
+        <button id="btn-buy-bot" class="btn primary">باز کردن ربات 🤖</button>
+      </div>
+    </section>
+
     <section id="tab-account" class="tab-page">
       <div id="auth-signed-in" class="hidden">
         <p>وارد شده‌اید به‌عنوان</p>
         <p class="email" id="auth-email"></p>
+        <div id="auth-sub" class="sub-status"></div>
         <button id="btn-logout" class="btn ghost">خروج از حساب</button>
       </div>
       <div id="auth-form">
         <h2>ورود / ثبت‌نام</h2>
-        <p class="hint">ایمیلت را وارد کن؛ یک کد ۶ رقمی برایت ارسال می‌شود.</p>
+        <p class="hint">با ایمیل و رمز عبور وارد شوید یا ثبت‌نام کنید. هر اینترنت فقط یک حساب.</p>
         <input id="auth-email-input" type="email" placeholder="you@gmail.com" dir="ltr">
-        <button id="btn-send-code" class="btn primary">ارسال کد</button>
-        <div id="code-row" class="hidden">
-          <input id="auth-code-input" type="text" inputmode="numeric" placeholder="کد ۶ رقمی" dir="ltr" maxlength="6">
-          <button id="btn-verify" class="btn primary">تأیید و ورود</button>
+        <input id="auth-password-input" type="password" placeholder="رمز عبور (حداقل ۶ کاراکتر)" dir="ltr">
+        <div class="auth-actions">
+          <button id="btn-login" class="btn primary">ورود</button>
+          <button id="btn-signup" class="btn ghost">ثبت‌نام</button>
         </div>
+        <button id="btn-forgot" class="btn ghost small">رمز عبور را فراموش کردم</button>
         <div id="auth-error" class="error hidden"></div>
         <div id="auth-ok" class="ok hidden"></div>
       </div>
     </section>
   </main>
 
-  <footer>Made by AREF KH — 2026 - 1405</footer>
+  <footer>سازنده: AREF KH — 2026 - 1405 · ربات: <a href="https://t.me/VPN5G_IRBot" target="_blank" rel="noopener">@VPN5G_IRBot</a></footer>
 </div>
+
+<div id="interstitial" class="interstitial hidden">
+  <div class="ad-card">
+    <div id="ad-image-wrap" class="hidden"><img id="ad-image" alt=""></div>
+    <div id="ad-text" class="ad-text"></div>
+    <button id="ad-open" class="btn ghost hidden">باز کردن لینک</button>
+    <div class="ad-countdown">شروع اتصال تا <b id="ad-count">10</b> ثانیه…</div>
+    <div class="ad-note">برای اتصال، تبلیغ را کامل ببینید.</div>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

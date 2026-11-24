@@ -1,37 +1,65 @@
-# VPN 5G for Windows — v1.0.0
+# VPN 5G for Windows — v2.0.0
 
-Native Windows VPN app (no admin rights, no TUN driver). It fetches live
-VLESS / VMess / Trojan / Shadowsocks configs, ping-tests them, shows the 20
-fastest for free (the rest are VIP), and routes traffic through the official
-Xray-core engine via the Windows system proxy.
+Native Windows VPN app (no admin rights, no TUN driver, no console
+window). It fetches live VLESS / VMess / Trojan / Shadowsocks configs,
+ping-tests them, shows the 20 fastest for free (the rest are VIP), and
+routes traffic through the official Xray-core engine via the Windows
+system proxy. Exactly like the Android app: same servers, same
+subscription, same codes, same ads.
 
 - **UI:** local web UI at http://127.0.0.1:17890, opened in the default
-  browser on launch. Dark X-VPN style, Persian.
+  browser on launch. Dark X-VPN style, Persian. A system-tray icon
+  (tray) offers connect / disconnect / open / quit; the exe shows no
+  console window (`-H=windowsgui`).
 - **Engine:** Xray-core v26.11.9 (`xray.exe` next to `vpn5g.exe`, downloaded
   by CI — never committed to this repo).
 - **Connection:** Windows system proxy
   (`HKCU\...\Internet Settings`, ProxyEnable + ProxyServer
-  `127.0.0.1:10809`), restored on disconnect and on any exit.
-- **Session:** 30 minutes, auto-disconnect, live countdown in the UI.
-- **Auth:** email OTP register/login via Supabase (same project as the
-  Android app). Session stored locally under `%APPDATA%\VPN5G\`.
+  `127.0.0.1:10809`), restored on disconnect and on any exit. The tunnel
+  is VERIFIED after connect (exit IP must change); on failure the app
+  fails over to the next server automatically (max 3 attempts).
+- **Session:** 30 minutes for free users, auto-disconnect, live countdown
+  in the UI. Subscribers (and gift tier while it lasts) have NO time
+  limit and the full server pool (gift: 50 fastest).
+- **Speeds:** live download/upload from Xray's stats API (127.0.0.1:10810);
+  unavailable speeds show "—", never a fake zero.
+- **Auth:** email + password register/login via Supabase (new project,
+  same as Android 1.1.9+). One account per IP + email; the IP guard
+  applies only to signup. Session stored locally under `%APPDATA%\VPN5G\`.
+  Password recovery is the LINK flow (the link completes in the browser).
+- **Subscription & codes:** plans + prices from the server config
+  (admin-editable in the bot); subscription codes in the Premium tab,
+  gift codes in the Servers tab. Codes are validated server-side first
+  (`validate_and_redeem_code`), with the published config list as the
+  fallback.
+- **Ads:** the 1.1.15 contract — connect #1 has no forced ad; from
+  connect #2 a full-screen interstitial (1–20 s, admin-set) shows before
+  the VPN starts, and the VPN starts only after the full view. The tray
+  never bypasses the ad. User-submitted ads follow their schedule and
+  caps; views/clicks are recorded server-side (best effort).
 - **Updates:** checks GitHub releases once a day; a banner offers a
   one-click download + self-restarting update.
+- **Chrome extension helper:** the extension uses `POST /api/connect`
+  (with a chosen server URI) and `GET /api/stats` on 127.0.0.1:17890;
+  VLESS/VMess/Trojan/Shadowsocks tunneling only works while this app
+  runs — the browser alone cannot run a proxy engine.
 
 ## Use on Windows
 
 1. Download `VPN5G-Windows.zip` from the
-   [Releases](https://github.com/nefrin2love/vpn5g-windows/releases) page
+   [Releases](https://github.com/VPN5G/vpn5g-windows/releases) page
    (or the Actions artifact) and extract it anywhere.
-2. Run `vpn5g.exe`. The UI opens in your browser automatically.
+2. Run `vpn5g.exe`. The UI opens in your browser automatically; the app
+   also sits in the system tray (no console window).
 3. Pick a server in the **سرورها** tab and tap it (or tap the power circle
-   to connect to the fastest free server). Tap again to disconnect.
-4. Sessions last 30 minutes; reconnect afterwards.
-5. VIP servers are locked in v1 — get VIP in the Telegram bot:
+   to connect to the fastest allowed server). Tap again to disconnect.
+4. Free sessions last 30 minutes; reconnect afterwards. Subscribers stay
+   connected with no time limit.
+5. VIP servers are locked — get VIP in the Telegram bot:
    https://t.me/VPN5G_IRBot
 
-No installation, no admin rights. To stop completely, close the app (or
-disconnect) — the system proxy is restored automatically.
+No installation, no admin rights. To stop completely, quit from the tray
+(or disconnect) — the system proxy is restored automatically.
 
 ## Config sources (refreshed every 5 minutes)
 
@@ -53,7 +81,7 @@ pinging configs; the rest show as VIP.
 ```sh
 export PATH=$HOME/go-install/go/bin:$PATH   # or wherever Go 1.25 lives
 go vet ./...
-CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o vpn5g.exe .
+CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H=windowsgui" -o vpn5g.exe .
 ```
 
 Then place `xray.exe` (Xray-core v26.11.9 windows-64) next to `vpn5g.exe`:
@@ -61,7 +89,7 @@ Then place `xray.exe` (Xray-core v26.11.9 windows-64) next to `vpn5g.exe`:
 ```sh
 curl -sSL -o Xray-windows-64.zip https://github.com/XTLS/Xray-core/releases/download/v26.11.9/Xray-windows-64.zip
 unzip -o Xray-windows-64.zip xray.exe
-zip -j VPN5G-Windows.zip vpn5g.exe xray.exe README.md
+zip -j VPN5G-Windows.zip vpn5g.exe xray.exe README.md README-FA.md
 ```
 
 ## Build on Windows
@@ -74,7 +102,7 @@ go build -o vpn5g.exe .
 ## In-app update flow
 
 On launch (and at most once a day while running) the app checks
-`https://api.github.com/repos/nefrin2love/vpn5g-windows/releases/latest`
+`https://api.github.com/repos/VPN5G/vpn5g-windows/releases/latest`
 with no auth. If a newer semver tag exists and the release has an asset
 named `VPN5G-Windows.zip`, a banner appears: «نسخه جدید اومد» + the new
 version + a **بروزرسانی** button.
@@ -99,13 +127,21 @@ API: `GET /api/update/check` (force with `?force=1`),
 
 | Endpoint | Method | Purpose |
 |---|---|---|
-| `/api/status` | GET | connected? current server, remaining seconds, server count, update info |
-| `/api/servers` | GET | ping-tested servers (free flag, country, ping) |
-| `/api/connect` | POST | `{"server_id": "..."}` |
+| `/api/status` | GET | connected? current server, remaining seconds, subscription, speeds, update info |
+| `/api/servers` | GET | ping-tested servers (free/allowed flags, country, ping) |
+| `/api/connect` | POST | `{"server_id": "..."}` or `{"uri": "..."}` (extension); `{"via":"extension"}` skips the helper's own ad gate |
 | `/api/disconnect` | POST | stop xray, restore proxy |
+| `/api/stats` | GET | live speeds (down/up bps + totals + available) — the Chrome extension helper endpoint |
 | `/api/config` | GET | version, ports, session minutes, free limit |
-| `/api/auth/send-code` | POST | `{"email": "..."}` — send 6-digit code |
-| `/api/auth/verify` | POST | `{"email": "...", "code": "123456"}` |
+| `/api/subscription` | GET | effective subscription (status, plan, remaining days) |
+| `/api/plans` | GET | plans + prices from the server config |
+| `/api/redeem` | POST | `{"code": "..."}` — server-first code validation |
+| `/api/announcement` | GET | live admin announcement (or null) |
+| `/api/ads/viewed` | POST | `{"ad_id": "..."}` — interstitial countdown completed |
+| `/api/ads/click` | POST | `{"ad_id": "..."}` — ad tap (never ends the countdown) |
+| `/api/auth/signup` | POST | `{"email": "...", "password": "..."}` |
+| `/api/auth/login` | POST | `{"email": "...", "password": "..."}` |
+| `/api/auth/recover` | POST | `{"email": "..."}` — send the password-reset link |
 | `/api/auth/status` | GET | signed-in email or not |
 | `/api/auth/logout` | POST | clear local session |
 | `/api/update/*` | — | see "In-app update flow" above |
@@ -113,20 +149,28 @@ API: `GET /api/update/check` (force with `?force=1`),
 ## Layout
 
 ```
-main.go            entry: HTTP server, browser launch, shutdown handling
+main.go            entry: HTTP server, browser launch, tray, shutdown handling
 store.go           config fetching, sampling, ping-testing, 5-min refresh
 parse.go           VLESS/VMess/Trojan/SS parsing, country derivation,
-                   Xray outbound builders, Xray config writer
+                   Xray outbound builders, Xray config writer (incl. stats API)
 xray.go            xray.exe child-process lifecycle
-session.go         connection state + 30-minute auto-disconnect timer
+session.go         connection state + tunnel verification + failover +
+                   30-minute timer (subscribers unlimited)
+stats.go           live speeds from Xray's stats API (xray api statsquery)
 proxy_*.go         Windows system proxy (registry) / non-Windows stub
 browser_*.go       open UI in default browser / stub
-auth.go            Supabase email OTP, local session file
+tray.go            Windows system tray (connect/disconnect/open/quit)
+tray_other.go      tray stub off Windows
+auth.go            Supabase password auth (new project), IP-guarded signup,
+                   subscription (server truth + local cache), code RPCs
+remoteconfig.go    app_config.json mirror (plans/codes/announcement/ads)
+ads.go             1.1.15 ad contract (interstitial, user ads, caps, ledger)
 update.go          GitHub release check, download with progress,
                    zip verification, updater.bat generation
 update_*.go        detached updater launch (Windows) / stub
 api.go             JSON API handlers
 web/               embedded UI (index.html, style.css, app.js)
+icon.ico           tray icon (transparent 512 shield artwork)
 .github/workflows/build-windows.yml   CI: build + package + smoke test
 ```
 

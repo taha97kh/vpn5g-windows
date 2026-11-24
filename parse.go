@@ -373,17 +373,38 @@ func firstNonEmpty(vals ...string) string {
 
 // writeXrayConfig writes the full Xray config: HTTP inbound on
 // 127.0.0.1:10809, the selected server as the proxy outbound, plus direct
-// (private IPs) and blocked fallbacks.
+// (private IPs) and blocked fallbacks. It also enables outbound traffic
+// stats and exposes the StatsService on 127.0.0.1:10810 so the app can
+// show live tunnel speeds (see stats.go). The stats API is local-only.
 func writeXrayConfig(path string, outbound map[string]any) error {
 	cfg := map[string]any{
 		"log": map[string]any{"loglevel": "warning"},
-		"inbounds": []any{map[string]any{
-			"port":     proxyPort,
-			"listen":   "127.0.0.1",
-			"protocol": "http",
-			"settings": map[string]any{},
-			"sniffing": map[string]any{"enabled": true, "destOverride": []string{"http", "tls"}},
+		"policy": map[string]any{"levels": map[string]any{
+			"0": map[string]any{
+				"statsOutboundUplink":   true,
+				"statsOutboundDownlink": true,
+			},
 		}},
+		"api": map[string]any{
+			"tag":      "api",
+			"services": []string{"StatsService"},
+		},
+		"inbounds": []any{
+			map[string]any{
+				"port":     proxyPort,
+				"listen":   "127.0.0.1",
+				"protocol": "http",
+				"settings": map[string]any{},
+				"sniffing": map[string]any{"enabled": true, "destOverride": []string{"http", "tls"}},
+			},
+			map[string]any{
+				"port":     xrayStatsPort,
+				"listen":   "127.0.0.1",
+				"protocol": "dokodemo-door",
+				"settings": map[string]any{"address": "127.0.0.1"},
+				"tag":      "api",
+			},
+		},
 		"outbounds": []any{
 			outbound,
 			map[string]any{"protocol": "freedom", "tag": "direct"},
@@ -392,6 +413,7 @@ func writeXrayConfig(path string, outbound map[string]any) error {
 		"routing": map[string]any{
 			"domainStrategy": "IPIfNonMatch",
 			"rules": []any{
+				map[string]any{"type": "field", "inboundTag": []string{"api"}, "outboundTag": "api"},
 				map[string]any{"type": "field", "ip": []string{"geoip:private"}, "outboundTag": "direct"},
 			},
 		},

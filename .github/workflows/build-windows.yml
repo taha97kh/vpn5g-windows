@@ -23,8 +23,8 @@ jobs:
       - name: Vet
         run: go vet ./...
 
-      - name: Build vpn5g.exe (windows/amd64, CGO off)
-        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o vpn5g.exe .
+      - name: Build vpn5g.exe (windows/amd64, CGO off, no console window)
+        run: CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H=windowsgui" -o vpn5g.exe .
 
       - name: Download Xray-core v26.11.9 (windows-64)
         run: |
@@ -33,7 +33,7 @@ jobs:
           ls -l xray.exe
 
       - name: Package VPN5G-Windows.zip
-        run: zip -j VPN5G-Windows.zip vpn5g.exe xray.exe README.md
+        run: zip -j VPN5G-Windows.zip vpn5g.exe xray.exe README.md README-FA.md
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -68,7 +68,10 @@ jobs:
             }
             if (-not $ok) { throw "UI did not respond with HTTP 200" }
             if ($p.HasExited) { throw "vpn5g.exe exited unexpectedly" }
-            Write-Host "Smoke test passed: UI reachable, process running."
+            # The helper API the Chrome extension uses must answer too.
+            $s = Invoke-WebRequest -Uri http://127.0.0.1:17890/api/stats -UseBasicParsing -TimeoutSec 5
+            if ($s.StatusCode -ne 200) { throw "/api/stats did not answer HTTP 200" }
+            Write-Host "Smoke test passed: UI + /api/stats reachable, process running."
           } finally {
             if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
           }

@@ -24,7 +24,7 @@ import (
 // vpn5g.exe) before anything is replaced.
 
 const (
-	githubLatestReleaseURL = "https://api.github.com/repos/nefrin2love/vpn5g-windows/releases/latest"
+	githubLatestReleaseURL = "https://api.github.com/repos/VPN5G/vpn5g-windows/releases/latest"
 	updateAssetName        = "VPN5G-Windows.zip"
 	updateCheckInterval    = 24 * time.Hour
 )

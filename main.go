@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	appVersion     = "v1.0.0"
+	appVersion     = "v2.0.0"
 	proxyPort      = 10809
 	uiPort         = 17890
 	sessionMinutes = 30
@@ -23,16 +23,29 @@ const (
 //go:embed web
 var webFS embed.FS
 
+//go:embed icon.ico
+var trayIcon []byte
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Printf("VPN 5G for Windows %s starting", appVersion)
 
+	subCache.load()
+	adImpressions.load()
+	redeemed.load()
+
 	store := newServerStore()
-	conn := newConnection(store)
 	auth := newAuthStore()
+	conn := newConnection(store, auth)
 
 	go store.refreshLoop()
+	go remoteCfg.refreshLoop()
 	go updateCheckLoop()
+	go func() {
+		// Refresh the subscription shortly after start (server truth).
+		time.Sleep(2 * time.Second)
+		auth.refreshSubscription()
+	}()
 
 	mux := http.NewServeMux()
 	registerAPI(mux, store, conn, auth)
@@ -55,6 +68,19 @@ func main() {
 			}
 		}()
 	}
+
+	// System tray (Windows only; a no-op elsewhere). The tray owns the
+	// process lifetime on Windows: choosing Quit there stops the tunnel
+	// and exits. The UI stays available at 127.0.0.1:17890.
+	trayQuit := runTray(conn, func() {
+		log.Println("tray quit requested")
+		conn.disconnect()
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Shutdown(ctx)
+		os.Exit(0)
+	})
+	_ = trayQuit
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)

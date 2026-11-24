@@ -94,3 +94,37 @@ h2 { font-size: 18px; margin: 4px 0 6px; }
 .email { direction: ltr; text-align: center; font-weight: 700; color: var(--cyan); }
 footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 28px; }
 .empty { color: var(--muted); text-align: center; padding: 24px 0; line-height: 1.8; }
+
+/* v2.0.0 additions */
+.speeds { margin-top: 14px; display: flex; justify-content: center; gap: 18px; font-size: 14px; color: var(--muted); }
+.speeds b { color: var(--cyan); direction: ltr; unicode-bidi: embed; }
+.badge.locked { background: rgba(139,152,169,.15); color: var(--muted); }
+.btn.gold { background: var(--gold); color: #2a1e00; border-color: var(--gold); font-weight: 700; }
+.gift-row { display: flex; gap: 10px; align-items: center; margin: 6px 0 12px; }
+.gift-box { background: var(--surface); border: 1px solid var(--gold); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+.gift-box input, .premium-block input, #auth-password-input {
+  width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text); font-size: 15px; font-family: inherit; margin-bottom: 10px; }
+.premium-block { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 12px; }
+.premium-block h3 { margin: 0 0 10px; font-size: 15px; color: var(--cyan); }
+.sub-status { background: var(--cyan-dim); border: 1px solid var(--cyan); border-radius: 12px; padding: 12px; margin-bottom: 12px; font-size: 14px; line-height: 1.7; }
+.plan { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+.plan-days { color: var(--muted); font-size: 13px; margin-inline-start: 8px; }
+.plan-buy { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.plan-buy a { text-decoration: none; }
+.auth-actions { display: flex; gap: 10px; margin-bottom: 10px; }
+.auth-actions .btn { flex: 1; }
+.announcement { background: linear-gradient(90deg, rgba(255,201,60,.18), rgba(255,201,60,.05));
+  border: 1px solid var(--gold); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px;
+  display: flex; justify-content: space-between; gap: 10px; align-items: center; font-size: 14px; line-height: 1.7; cursor: pointer; }
+.interstitial { position: fixed; inset: 0; background: rgba(4, 6, 9, .97); z-index: 100;
+  display: flex; align-items: center; justify-content: center; padding: 20px; }
+.ad-card { max-width: 480px; width: 100%; background: var(--surface); border: 1px solid var(--cyan);
+  border-radius: 18px; padding: 24px; text-align: center;
+  box-shadow: 0 0 60px rgba(0,229,255,.25); }
+.ad-card img { max-width: 100%; border-radius: 12px; margin-bottom: 14px; }
+.ad-text { font-size: 17px; line-height: 1.8; margin-bottom: 14px; }
+.ad-countdown { font-size: 22px; font-weight: 800; color: var(--cyan); margin-top: 12px; }
+.ad-countdown b { direction: ltr; unicode-bidi: embed; }
+.ad-note { color: var(--muted); font-size: 13px; margin-top: 8px; }
