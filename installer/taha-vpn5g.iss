@@ -38,6 +38,11 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesAllowed=x64
+; 64-bit mode: the app is amd64-only, and it makes {sys} the real
+; System32 (where curl.exe lives — under WoW64 redirection a 32-bit
+; setup would see SysWOW64, which has no curl.exe, and the graceful
+; quit in [UninstallRun] would never run).
+ArchitecturesInstallIn64BitMode=x64
 MinVersion=10.0
 OutputDir=output
 OutputBaseFilename=TAHA VPN 5G Setup
@@ -121,7 +126,7 @@ Filename: "{app}\vpn5g.exe"; Description: "اجرای {#AppName}"; Flags: nowait
 [UninstallRun]
 ; 1) Ask the running app to disconnect the tunnel and exit cleanly
 ;    (loopback-only endpoint; fails silently when the app is not running).
-Filename: "{sys}\curl.exe"; Parameters: "-s -m 5 -X POST http://127.0.0.1:17890/api/quit"; Flags: runhidden
+Filename: "{sys}\curl.exe"; Parameters: "-s -m 5 -X POST http://127.0.0.1:17890/api/quit"; Flags: runhidden skipifdoesntexist
 ; 2) Fallbacks: make sure no tunnel process survives the uninstall.
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM vpn5g.exe"; Flags: runhidden
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM xray.exe"; Flags: runhidden

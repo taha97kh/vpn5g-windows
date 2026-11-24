@@ -163,7 +163,8 @@ jobs:
             if (Test-Path $unins) {
               Start-Process -FilePath $unins -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait
             }
-            Start-Sleep -Seconds 2
+            Start-Sleep -Seconds 5
+            $p.Refresh()
             if ($p -and -not $p.HasExited) { throw "vpn5g.exe still running after uninstall" }
             if (Test-Path $appDir) { throw "install dir still present after uninstall" }
             if (Test-Path "HKCU:\Software\Google\Chrome\NativeMessagingHosts\com.taha97kh.vpn5g") { throw "NM host registry key still present after uninstall" }
