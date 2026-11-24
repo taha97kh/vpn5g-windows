@@ -47,7 +47,7 @@ subscription, same codes, same ads.
 ## Use on Windows
 
 1. Download `VPN5G-Windows.zip` from the
-   [Releases](https://github.com/VPN5G/vpn5g-windows/releases) page
+   [Releases](https://github.com/taha97kh/vpn5g-windows/releases) page
    (or the Actions artifact) and extract it anywhere.
 2. Run `vpn5g.exe`. The UI opens in your browser automatically; the app
    also sits in the system tray (no console window).
@@ -102,7 +102,7 @@ go build -o vpn5g.exe .
 ## In-app update flow
 
 On launch (and at most once a day while running) the app checks
-`https://api.github.com/repos/VPN5G/vpn5g-windows/releases/latest`
+`https://api.github.com/repos/taha97kh/vpn5g-windows/releases/latest`
 with no auth. If a newer semver tag exists and the release has an asset
 named `VPN5G-Windows.zip`, a banner appears: «نسخه جدید اومد» + the new
 version + a **بروزرسانی** button.
