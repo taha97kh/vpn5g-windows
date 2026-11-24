@@ -161,7 +161,10 @@ jobs:
             # and remove the files + the NM host registry key.
             $unins = Join-Path $appDir "unins000.exe"
             if (Test-Path $unins) {
-              Start-Process -FilePath $unins -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait
+              $un = Start-Process -FilePath $unins -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait -PassThru
+              Write-Host "Uninstaller exit code: $($un.ExitCode)"
+            } else {
+              throw "unins000.exe missing in $appDir"
             }
             Start-Sleep -Seconds 5
             $p.Refresh()

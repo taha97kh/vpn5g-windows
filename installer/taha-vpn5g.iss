@@ -54,7 +54,13 @@ SolidCompression=yes
 ; Refuse to install over a running copy: the app owns a named mutex
 ; (same name as the app's single-instance guard); setup tells the user
 ; to close the app first instead of failing on locked files.
-AppMutex=TAHA VPN 5G Single Instance
+; SetupMutex (NOT AppMutex): the installer must refuse to run while the
+; app is running (it would replace a running exe), but the UNINSTALLER
+; must NOT be blocked by it — AppMutex is also checked by the
+; uninstaller, so with AppMutex the uninstaller aborts before
+; [UninstallRun] can quit the app, and vpn5g.exe stays alive. The
+; single-instance guard itself lives in the app (named mutex).
+SetupMutex=TAHA VPN 5G Single Instance
 VersionInfoVersion={#AppVersion}
 VersionInfoDescription=TAHA VPN 5G — نصب‌کننده ویندوز
 VersionInfoProductName={#AppName}
