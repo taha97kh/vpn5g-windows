@@ -6,3 +6,7 @@ VPN5G-Windows.zip
 Xray-windows-64.zip
 dist/
 *.log
+# Installer staging + output (built by CI only).
+installer/staging/
+installer/output/
+nmhost.exe

@@ -285,12 +285,22 @@ func (c *connection) disconnect() {
 	c.disconnectLocked()
 }
 
+// isActive reports whether the tunnel is currently up.
+func (c *connection) isActive() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.active
+}
+
 func (c *connection) disconnectLocked() {
 	if c.stopTimer != nil {
 		close(c.stopTimer)
 		c.stopTimer = nil
 	}
 	speeds.stop()
+	// Persist the volume ledger now: the stats poller is stopped and no
+	// more usage will accrue for this session.
+	usage.save()
 	c.xray.stop()
 	_ = setSystemProxy(false)
 	c.active = false

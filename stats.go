@@ -94,6 +94,10 @@ func (p *statsPoller) start() {
 				}
 				p.mu.Unlock()
 				if ok {
+					// Fold this tick into the volume ledger (Model B):
+					// usage accrues only while the tunnel runs, from
+					// these same real cumulative counters.
+					usage.noteSample(subCache.get(), down, up)
 					lastDown, lastUp, lastAt = down, up, now
 				}
 			}

@@ -245,11 +245,43 @@
   });
 
   // ---- Premium tab ----
+  function fmtGB(gb) {
+    if (gb == null || gb === undefined) return 'نامحدود';
+    return Number(gb).toLocaleString('fa-IR', { maximumFractionDigits: 1 }) + ' گیگابایت';
+  }
+
+  // Volume (Model B): cap from the server plan, usage from the real local
+  // tunnel counters. Unlimited plans show «نامحدود» — never a made-up cap.
+  function renderVolume(res) {
+    var box = $('sub-volume');
+    if (!res.subscriber && !res.gift) { show(box, false); return; }
+    show(box, true);
+    if (!res.volume_limited) {
+      $('vol-total').textContent = 'نامحدود';
+      $('vol-used').textContent = '—';
+      $('vol-remaining').textContent = 'نامحدود';
+      $('vol-fill').style.width = '0%';
+      $('vol-fill').classList.remove('full');
+      $('vol-note').textContent = 'حجم این طرح نامحدود است — فقط زمان اعتبار دارد.';
+      return;
+    }
+    $('vol-total').textContent = fmtGB(res.volume_gb);
+    $('vol-used').textContent = fmtGB(res.used_gb);
+    $('vol-remaining').textContent = fmtGB(res.remaining_gb);
+    var pct = Math.max(0, Math.min(100, res.usage_percent || 0));
+    $('vol-fill').style.width = pct + '%';
+    $('vol-fill').classList.toggle('full', !!res.volume_exceeded);
+    $('vol-note').textContent = res.volume_exceeded
+      ? 'حجم اشتراک تمام شد — برای ادامه اشتراک را تمدید کنید.'
+      : 'مصرف: ' + Math.round(pct) + '٪';
+  }
+
   function loadSubscription() {
     api('/api/subscription').then(function (res) {
       var el = $('sub-status');
       if (!res.signed_in) {
         el.textContent = 'برای دیدن اشتراک، ابتدا وارد حساب شوید.';
+        show($('sub-volume'), false);
         return;
       }
       if (res.subscriber) {
@@ -259,6 +291,7 @@
       } else {
         el.textContent = 'اشتراک فعالی ندارید — از بخش طرح‌ها اشتراک تهیه کنید.';
       }
+      renderVolume(res);
     }).catch(function () {});
   }
 
@@ -272,8 +305,9 @@
       var html = '';
       plans.forEach(function (p) {
         var price = p.price_toman ? Number(p.price_toman).toLocaleString('fa-IR') + ' تومان' : '—';
+        var vol = p.gb ? ' — ' + Number(p.gb).toLocaleString('fa-IR') + ' گیگابایت' : '';
         html += '<div class="plan"><div><b>' + esc(p.name_fa || p.id) + '</b>' +
-          '<span class="plan-days">' + (p.days || '') + ' روز</span></div>' +
+          '<span class="plan-days">' + (p.days || '') + ' روز' + vol + '</span></div>' +
           '<div class="plan-buy"><span>' + price + '</span>' +
           '<a class="btn primary small" href="' + esc(p.buy_url) + '" target="_blank" rel="noopener">خرید</a></div></div>';
       });
@@ -311,9 +345,13 @@
       if (res.signed_in) {
         $('auth-email').textContent = res.email || '';
         api('/api/subscription').then(function (s) {
-          $('auth-sub').textContent = s.subscriber
+          var t = s.subscriber
             ? 'اشتراک ویژه فعال — ' + (s.remaining_days || 0) + ' روز مانده'
             : (s.gift ? 'کد هدیه فعال — ' + (s.remaining_days || 0) + ' روز مانده' : 'اشتراک رایگان');
+          if (s.volume_limited) {
+            t += s.volume_exceeded ? ' — حجم تمام شد' : ' — ' + fmtGB(s.used_gb) + ' از ' + fmtGB(s.volume_gb);
+          }
+          $('auth-sub').textContent = t;
         }).catch(function () {});
       }
     }).catch(function () {});

@@ -84,6 +84,13 @@ header { display: flex; justify-content: space-between; align-items: baseline; m
 #update-progress-fill { height: 100%; width: 0%; background: var(--cyan); transition: width .3s; }
 .progress-text { font-size: 13px; color: var(--muted); margin-top: 6px; }
 
+/* Volume block (Model B, Premium tab): total / used / remaining + bar. */
+.volume-block { margin-top: 10px; }
+.volume-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 4px; }
+.volume-row b { color: var(--text); font-weight: 600; }
+.volume-fill { height: 100%; width: 0%; background: var(--cyan); transition: width .3s; }
+.volume-fill.full { background: var(--red); }
+
 .error { background: rgba(255,92,92,.12); border: 1px solid var(--red); color: #ffb3b3;
   border-radius: 12px; padding: 10px 12px; margin-top: 12px; font-size: 14px; line-height: 1.6; }
 .ok { background: rgba(34,229,132,.12); border: 1px solid var(--green); color: #b8ffda;

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	appVersion     = "v2.0.0"
+	appVersion     = "v2.1.0"
 	proxyPort      = 10809
 	uiPort         = 17890
 	sessionMinutes = 30
@@ -30,13 +30,26 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Printf("VPN 5G for Windows %s starting", appVersion)
 
+	// Second copy? Never start a second tunnel / second HTTP server:
+	// just open the running instance's UI and exit.
+	if ensureSingleInstance() {
+		log.Println("another instance is already running — opening its window and exiting")
+		_ = openBrowser("http://127.0.0.1:17890")
+		return
+	}
+
 	subCache.load()
 	adImpressions.load()
 	redeemed.load()
+	usage.load()
 
 	store := newServerStore()
 	auth := newAuthStore()
 	conn := newConnection(store, auth)
+
+	// Model B, volume half: cut the tunnel as soon as a volume-capped
+	// plan runs out mid-session.
+	go volumeWatchdog(conn)
 
 	go store.refreshLoop()
 	go remoteCfg.refreshLoop()

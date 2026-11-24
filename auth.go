@@ -414,7 +414,13 @@ func (s subscriptionInfo) active() bool {
 	if s.Status != "active" && s.Status != "gift" {
 		return false
 	}
-	return s.ExpiresAt.IsZero() || time.Now().Before(s.ExpiresAt)
+	if !s.ExpiresAt.IsZero() && !time.Now().Before(s.ExpiresAt) {
+		return false
+	}
+	// Model B, volume half: a volume-capped plan (gb_*) is inactive once
+	// its measured usage reaches the published cap, even if days remain.
+	// Time-only plans (sub_*) have no cap and are unaffected.
+	return !usage.exceeded(s)
 }
 
 func (s subscriptionInfo) isGift() bool { return s.Status == "gift" && s.active() }

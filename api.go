@@ -123,6 +123,7 @@ func registerAPI(mux *http.ServeMux, store *serverStore, conn *connection, auth 
 		st["servers_updated_at"] = updatedAt.Format(time.RFC3339)
 		st["servers_refreshing"] = refreshing
 		st["version"] = appVersion
+		st["volume_exceeded"] = usage.exceeded(subCache.get())
 		st["update_available"] = upd.snapshot()["update_available"]
 		st["latest_version"] = upd.snapshot()["latest_version"]
 		writeJSON(w, http.StatusOK, st)
@@ -261,6 +262,25 @@ func registerAPI(mux *http.ServeMux, store *serverStore, conn *connection, auth 
 		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "status": conn.status()})
 	})
 
+	// POST /api/quit — clean shutdown for the uninstaller (and the
+	// Native Messaging host): disconnect the tunnel, then exit so the
+	// installer/uninstaller can replace or remove the files. The server
+	// only listens on 127.0.0.1, so this is loopback-only.
+	mux.HandleFunc("/api/quit", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			writeErr(w, http.StatusMethodNotAllowed, "POST only")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+		// Flush the response first, then disconnect (stop xray, restore
+		// the system proxy) and exit.
+		go func() {
+			time.Sleep(300 * time.Millisecond)
+			conn.disconnect()
+			os.Exit(0)
+		}()
+	})
+
 	// GET /api/stats — live tunnel speeds (Chrome extension helper contract).
 	// Unavailable speeds are reported as available=false; the UI shows "—",
 	// never a fake zero.
@@ -295,15 +315,35 @@ func registerAPI(mux *http.ServeMux, store *serverStore, conn *connection, auth 
 			go auth.refreshSubscription()
 		}
 		sub := subCache.get()
+		// Volume (Model B): cap from the server-published plan ("gb"),
+		// usage from the real local tunnel counters. Nulls when the plan
+		// has no cap — the UI shows «نامحدود», never a made-up number.
+		vol := usage.snapshot(sub)
+		var volumeGB, remainingGB, usagePct *float64
+		if vol.Limited {
+			g := vol.CapGB
+			volumeGB = &g
+			rg := float64(vol.RemainingBytes) / float64(bytesPerGB)
+			remainingGB = &rg
+			p := vol.Percent
+			usagePct = &p
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
-			"signed_in":      email != "",
-			"email":          email,
-			"status":         sub.Status,
-			"plan":           sub.Plan,
-			"subscriber":     sub.active() && !sub.isGift(),
-			"gift":           sub.isGift(),
-			"remaining_days": sub.remainingDays(),
-			"expires_at":     sub.ExpiresAt.Format(time.RFC3339),
+			"signed_in":       email != "",
+			"email":           email,
+			"status":          sub.Status,
+			"plan":            sub.Plan,
+			"subscriber":      sub.active() && !sub.isGift(),
+			"gift":            sub.isGift(),
+			"remaining_days":  sub.remainingDays(),
+			"expires_at":      sub.ExpiresAt.Format(time.RFC3339),
+			"volume_limited":  vol.Limited,
+			"volume_gb":       volumeGB,
+			"used_bytes":      vol.UsedBytes,
+			"used_gb":         float64(vol.UsedBytes) / float64(bytesPerGB),
+			"remaining_gb":    remainingGB,
+			"usage_percent":   usagePct,
+			"volume_exceeded": vol.Exceeded,
 		})
 	})
 
@@ -318,7 +358,7 @@ func registerAPI(mux *http.ServeMux, store *serverStore, conn *connection, auth 
 		for _, p := range plans {
 			out = append(out, map[string]any{
 				"id": p.ID, "days": p.Days, "price_toman": p.PriceToman,
-				"name_fa": p.NameFa, "buy_url": buyURL(p.ID),
+				"name_fa": p.NameFa, "gb": p.GB, "buy_url": buyURL(p.ID),
 			})
 		}
 		writeJSON(w, http.StatusOK, map[string]any{"plans": out})

@@ -19,6 +19,11 @@ type planRemote struct {
 	Days       int    `json:"days"`
 	PriceToman int64  `json:"price_toman"`
 	NameFa     string `json:"name_fa"`
+	// GB is the plan's total traffic cap in gigabytes, as published by
+	// the bot (e.g. gb_20 -> 20). Absent or 0 = NO volume cap: the plan
+	// is time-only (sub_*) and its volume is unlimited. Never invent a
+	// cap here — only the published value counts.
+	GB float64 `json:"gb"`
 }
 
 type codeRemote struct {
@@ -107,6 +112,29 @@ func (r *remoteConfig) snapshot() (appConfigRemote, bool) {
 func (r *remoteConfig) plans() []planRemote {
 	cfg, _ := r.snapshot()
 	return cfg.Plans
+}
+
+// planByID returns the published plan with this id, or nil.
+func (r *remoteConfig) planByID(id string) *planRemote {
+	plans := r.plans()
+	for i := range plans {
+		if plans[i].ID == id {
+			return &plans[i]
+		}
+	}
+	return nil
+}
+
+// planCapGB returns the plan's total traffic cap in gigabytes.
+// 0 means the plan has NO volume cap (time-only plan, e.g. sub_*) —
+// its volume is unlimited. The cap comes only from the server-published
+// plan config; it is never invented locally.
+func (r *remoteConfig) planCapGB(planID string) float64 {
+	p := r.planByID(planID)
+	if p == nil || p.GB <= 0 {
+		return 0
+	}
+	return p.GB
 }
 
 func (r *remoteConfig) codes() []codeRemote {

@@ -84,6 +84,13 @@
       <h2>ویژه ✨</h2>
       <p class="hint">اشتراک ویژه: همه‌ی سرورها، بدون قطع ۳۰ دقیقه‌ای، اتصال خودکار به سرور دیگر در صورت افت.</p>
       <div id="sub-status" class="sub-status">در حال بررسی اشتراک…</div>
+      <div id="sub-volume" class="volume-block hidden">
+        <div class="volume-row"><span>حجم کل</span><b id="vol-total">—</b></div>
+        <div class="volume-row"><span>مصرف‌شده</span><b id="vol-used">—</b></div>
+        <div class="volume-row"><span>باقی‌مانده</span><b id="vol-remaining">—</b></div>
+        <div class="progress-bar"><div id="vol-fill" class="volume-fill"></div></div>
+        <div id="vol-note" class="progress-text"></div>
+      </div>
       <div class="premium-block">
         <h3>ثبت کد اشتراک خریداری‌شده</h3>
         <input id="redeem-code-input" type="text" placeholder="کد اشتراک" dir="ltr" autocomplete="off">

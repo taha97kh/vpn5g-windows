@@ -41,6 +41,135 @@ jobs:
           name: VPN5G-Windows
           path: VPN5G-Windows.zip
 
+  installer:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Build nmhost.exe (Native Messaging host)
+        run: |
+          $env:CGO_ENABLED = "0"
+          go build -trimpath -ldflags "-s -w" -o installer/staging/nmhost.exe ./cmd/nmhost
+
+      - name: Download app artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: VPN5G-Windows
+
+      - name: Stage installer files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path installer/staging | Out-Null
+          Expand-Archive -Path VPN5G-Windows.zip -DestinationPath installer/staging -Force
+          Get-ChildItem installer/staging
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build installer
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\taha-vpn5g.iss
+          Get-ChildItem installer/output
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TAHA-VPN-5G-Setup
+          path: installer/output/TAHA VPN 5G Setup.exe
+
+  installer-smoke-test:
+    needs: installer
+    runs-on: windows-latest
+    steps:
+      - name: Download installer
+        uses: actions/download-artifact@v4
+        with:
+          name: TAHA-VPN-5G-Setup
+
+      - name: Silent install
+        shell: pwsh
+        run: |
+          Start-Process -FilePath ".\TAHA VPN 5G Setup.exe" -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait
+          $appDir = Join-Path $env:LOCALAPPDATA "Programs\TAHA VPN 5G"
+          foreach ($f in @("vpn5g.exe", "xray.exe", "nmhost.exe", "com.taha97kh.vpn5g.json")) {
+            if (-not (Test-Path (Join-Path $appDir $f))) { throw "$f missing after install in $appDir" }
+          }
+          $reg = Get-ItemProperty -Path "HKCU:\Software\Google\Chrome\NativeMessagingHosts\com.taha97kh.vpn5g" -ErrorAction Stop
+          Write-Host "NM host registered at: $($reg.'(default)')"
+          Write-Host "Silent install OK: files + NM host manifest + registry key present."
+
+      - name: Run app, check UI + NM host, then silent uninstall
+        shell: pwsh
+        run: |
+          $appDir = Join-Path $env:LOCALAPPDATA "Programs\TAHA VPN 5G"
+          $env:VPN5G_NO_BROWSER = "1"
+          $p = Start-Process -FilePath (Join-Path $appDir "vpn5g.exe") -PassThru
+          try {
+            $ok = $false
+            for ($i = 0; $i -lt 30; $i++) {
+              try {
+                $r = Invoke-WebRequest -Uri http://127.0.0.1:17890 -UseBasicParsing -TimeoutSec 2
+                if ($r.StatusCode -eq 200) { $ok = $true; break }
+              } catch { Start-Sleep -Seconds 1 }
+            }
+            if (-not $ok) { throw "UI did not respond with HTTP 200" }
+            if ($p.HasExited) { throw "vpn5g.exe exited unexpectedly" }
+            Write-Host "App runs after install: UI answers HTTP 200."
+
+            # Native Messaging host: one framed {"type":"ping"} on stdin,
+            # one framed reply on stdout; it must report app_running=true.
+            $psi = New-Object System.Diagnostics.ProcessStartInfo
+            $psi.FileName = Join-Path $appDir "nmhost.exe"
+            $psi.RedirectStandardInput = $true
+            $psi.RedirectStandardOutput = $true
+            $psi.RedirectStandardError = $true
+            $psi.UseShellExecute = $false
+            $psi.CreateNoWindow = $true
+            $nm = [System.Diagnostics.Process]::Start($psi)
+            $payload = [System.Text.Encoding]::UTF8.GetBytes('{"type":"ping"}')
+            $lenBytes = [System.BitConverter]::GetBytes([uint32]$payload.Length)
+            $in = $nm.StandardInput.BaseStream
+            $in.Write($lenBytes, 0, 4)
+            $in.Write($payload, 0, $payload.Length)
+            $in.Flush()
+            $out = $nm.StandardOutput.BaseStream
+            function Read-Exact($stream, $count) {
+              $buf = New-Object byte[] $count
+              $off = 0
+              while ($off -lt $count) {
+                $n = $stream.Read($buf, $off, $count - $off)
+                if ($n -le 0) { throw "nmhost closed the stream early" }
+                $off += $n
+              }
+              return $buf
+            }
+            $respLen = [System.BitConverter]::ToUInt32((Read-Exact $out 4), 0)
+            $resp = [System.Text.Encoding]::UTF8.GetString((Read-Exact $out $respLen))
+            Write-Host "nmhost reply: $resp"
+            if ($resp -notmatch '"app_running":true') { throw "nmhost ping did not report app_running=true" }
+            $in.Close()
+            if (-not $nm.WaitForExit(5000)) { throw "nmhost did not exit after stdin closed" }
+            Write-Host "NM host ping OK."
+          } finally {
+            # Silent uninstall must quit the app itself (via /api/quit)
+            # and remove the files + the NM host registry key.
+            $unins = Join-Path $appDir "unins000.exe"
+            if (Test-Path $unins) {
+              Start-Process -FilePath $unins -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/NORESTART" -Wait
+            }
+            Start-Sleep -Seconds 2
+            if ($p -and -not $p.HasExited) { throw "vpn5g.exe still running after uninstall" }
+            if (Test-Path $appDir) { throw "install dir still present after uninstall" }
+            if (Test-Path "HKCU:\Software\Google\Chrome\NativeMessagingHosts\com.taha97kh.vpn5g") { throw "NM host registry key still present after uninstall" }
+            Write-Host "Silent uninstall OK: app stopped, files + registry key removed."
+          }
+
   smoke-test:
     needs: build
     runs-on: windows-latest
